@@ -44,12 +44,18 @@ let popup  = (feature, layer) => {
 let etiqueta  = (feature, layerParroquias) => {
 
   //  layer.Icon = customIcon,
-    
-  layerParroquias.bindPopup(`<div>
+    layerParroquias.on({
+      mouseover: highlightFeature,
+      mouseout: resetHighlight,
+      click: zoomToFeature
+  });
+
+  /*layerParroquias.bindPopup(`<div>
             
                         <h3>${feature.properties.txt}</h3>
                         <h4>Total ${feature.properties.total}</h4>
-                    </div>`);
+                    </div>`);*/
+      
 
 
 };
@@ -116,13 +122,13 @@ let layer = L.geoJson(null, {
 //  console.log(data)
 
 
-var owsrootUrl2 = 'http://localhost:8080/geoserver/parroquias/ows';
+var owsrootUrl2 = 'http://142.93.183.43:8080/geoserver/espacioParroquias/ows';
 
 var defaultParameters2 = {
   service: 'WFS',
   version: '2.0.0',
         request: 'GetFeature',
-  typeName: 'parroquias:count_point_parroquias',
+  typeName: 'espacioParroquias:puntosParroquias',
   outputFormat: 'application/json',
 
 };
@@ -145,6 +151,29 @@ function getColor(d) {
  d < 4 ? '#7CF842' :		
  '#F79738';												
   }
+
+  
+  function highlightFeature(e) {
+    var layer = e.target;
+
+    layer.setStyle({
+        weight: 5,
+        color: '#666',
+        dashArray: '',
+        fillOpacity: 0.7
+    });
+    info.update(layer.feature.properties);
+    layer.bringToFront();
+}
+
+function resetHighlight(e) {
+  layerParroquias.resetStyle(e.target);
+  info.update();
+}
+
+function zoomToFeature(e) {
+  map.fitBounds(e.target.getBounds());
+}
 
   var owsrootUrl = 'http://142.93.183.43:8080/geoserver/espacioPersonas/ows';
 
@@ -216,6 +245,7 @@ let layerParroquias = L.geoJson(null, {
 
 //////////////////////////////////////////////
 
+
 var baseMaps = {
     "OSM": osmLayer,
     
@@ -226,7 +256,28 @@ var overlayMaps = {
     "Parroquias": layerParroquias,
 
 };
+////////////////////////////
+var info = L.control();
 
+info.onAdd = function (map) {
+    this._div = L.DomUtil.create('div', 'info'); // create a div with a class "info"
+    this.update();
+    return this._div;
+};
+
+// method that we will use to update the control based on feature properties passed
+info.update = function (props) {
+    this._div.innerHTML = '<h4>Parroquias Riobamba</h4>' +  (props ?
+        '<b>' +'Total: '+ props.txt + '</b><br />' + props.total 
+        : 'Hover over a state');
+};
+
+
+
+info.addTo(map);
+
+
+///////////////legend///////////////////////
 var legend = L.control({position: 'bottomright'});
 
 legend.onAdd = function (map) {
